@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="34" viewBox="0 0 1200 34" role="img" aria-label="Animated cyan VEYRON divider">
+  <defs><linearGradient id="line" x1="0" x2="1"><stop stop-color="#19D6D0" stop-opacity="0"/><stop offset=".5" stop-color="#19D6D0"/><stop offset="1" stop-color="#19D6D0" stop-opacity="0"/></linearGradient></defs>
+  <path d="M0 17H1200" stroke="#174448" stroke-width="1"/>
+  <path d="M0 17H1200" stroke="url(#line)" stroke-width="2" stroke-dasharray="90 1110">
+    <animate attributeName="stroke-dashoffset" from="1200" to="0" dur="5s" repeatCount="indefinite"/>
+  </path>
+  <circle cx="600" cy="17" r="4" fill="#7AF7E8"><animate attributeName="r" values="3;6;3" dur="2.4s" repeatCount="indefinite"/></circle>
+</svg>
