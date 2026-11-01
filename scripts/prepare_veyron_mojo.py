@@ -115,21 +115,39 @@ write_resource("layout/activity_mojo_ui.xml", r"""
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="0dp" android:layout_height="match_parent"
         android:layout_weight="1" android:background="@drawable/veyron_shell_background">
-        <com.kdt.mcgui.AccountSpinner
-            android:id="@+id/account_spinner"
-            android:layout_width="0dp" android:layout_height="52dp"
-            android:dropDownWidth="@dimen/_250sdp"
-            android:dropDownVerticalOffset="@dimen/_52sdp"
-            android:paddingEnd="8dp"
+        <LinearLayout
+            android:id="@+id/veyron_header"
+            android:layout_width="0dp" android:layout_height="62dp"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingStart="16dp" android:paddingEnd="14dp"
+            android:background="#CC0D191D"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:ignore="RtlSymmetry" />
+            app:layout_constraintEnd_toEndOf="parent">
+            <ImageView android:layout_width="30dp" android:layout_height="30dp"
+                android:src="@drawable/ic_veyron_mark" android:contentDescription="VEYRON" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical" android:layout_marginStart="9dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="VEYRON LAUNCHER" android:textColor="#F0F7F7"
+                    android:textSize="12sp" android:textStyle="bold" android:letterSpacing="0.10" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="JAVA EDITION  •  GAME HUB" android:textColor="#769397"
+                    android:textSize="8sp" android:letterSpacing="0.08" />
+            </LinearLayout>
+            <com.kdt.mcgui.AccountSpinner
+                android:id="@+id/account_spinner"
+                android:layout_width="220dp" android:layout_height="46dp"
+                android:background="@drawable/veyron_account_chip"
+                android:dropDownWidth="240dp" android:dropDownVerticalOffset="4dp"
+                android:paddingStart="8dp" android:paddingEnd="8dp"
+                tools:ignore="RtlSymmetry" />
+        </LinearLayout>
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/container_fragment"
             android:name="git.artdeell.mojo.fragments.MainMenuFragment"
             android:layout_width="0dp" android:layout_height="0dp"
-            app:layout_constraintTop_toBottomOf="@id/account_spinner"
+            app:layout_constraintTop_toBottomOf="@id/veyron_header"
             app:layout_constraintBottom_toTopOf="@id/progress_layout"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
@@ -319,6 +337,79 @@ write_resource("layout-land/fragment_launcher.xml", r"""
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
 """)
+
+write_resource("drawable/veyron_account_chip.xml", r"""
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#18282D" /><corners android:radius="13dp" />
+    <stroke android:width="1dp" android:color="#38545A" />
+</shape>
+""")
+write_resource("drawable/veyron_account_item.xml", r"""
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#142126" /><corners android:radius="10dp" />
+    <stroke android:width="1dp" android:color="#29444A" />
+</shape>
+""")
+write_resource("layout/item_account.xml", r"""
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="48dp"
+    android:orientation="horizontal" android:gravity="center_vertical"
+    android:paddingStart="8dp" android:paddingEnd="5dp"
+    android:background="@drawable/veyron_account_item">
+    <fr.spse.extended_view.ExtendedTextView
+        android:id="@+id/account_item" android:layout_width="0dp"
+        android:layout_height="match_parent" android:layout_weight="1"
+        android:gravity="center_vertical" android:textColor="#EAFBFA"
+        android:textSize="12sp" android:drawablePadding="9dp"
+        android:paddingStart="5dp" android:drawableTint="#55D8C8"
+        app:drawableStartSize="28dp" app:drawableEndSize="18dp"
+        tools:text="Add account" tools:drawableStart="@drawable/ic_add"
+        tools:ignore="RtlSymmetry" />
+    <ImageView android:id="@+id/delete_account_button"
+        android:layout_width="40dp" android:layout_height="match_parent"
+        android:background="?attr/selectableItemBackground"
+        android:src="@drawable/ic_px_trash" android:tint="#8FA6AA"
+        android:padding="11dp" />
+</LinearLayout>
+""")
+
+
+# Apply VEYRON colors to the existing launcher and preference theme.
+colors = APP / "src" / "main" / "res" / "values" / "colors.xml"
+for old, new in [
+    ('<color name="minebutton_color">#91dffb</color>', '<color name="minebutton_color">#16C7B4</color>'),
+    ('<color name="minebutton_secondary">#2a2a2a</color>', '<color name="minebutton_secondary">#18282D</color>'),
+    ('<color name="background_app">#181818</color>', '<color name="background_app">#0B151A</color>'),
+    ('<color name="background_overlay">#464646</color>', '<color name="background_overlay">#263A40</color>'),
+    ('<color name="background_status_bar">#242424</color>', '<color name="background_status_bar">#0A1216</color>'),
+    ('<color name="background_bottom_bar">#232323</color>', '<color name="background_bottom_bar">#101E23</color>'),
+    ('<color name="secondary_text">#B2B2B2</color>', '<color name="secondary_text">#9EB3B7</color>'),
+]:
+    replace_once(colors, old, new)
+styles = APP / "src" / "main" / "res" / "values" / "styles.xml"
+style_data = styles.read_text(encoding="utf-8")
+style_data = style_data.replace('<item name="windowNoTitle">true</item>',
+    '<item name="windowNoTitle">true</item>\\n        <item name="colorAccent">#16C7B4</item>\\n        <item name="android:colorAccent">#16C7B4</item>\\n        <item name="android:textColorPrimary">#EAFBFA</item>\\n        <item name="android:textColorSecondary">#9EB3B7</item>')
+styles.write_text(style_data, encoding="utf-8")
+# Point any legacy MJ/Pojav logo resource references at the VEYRON emblem.
+for path in APP.rglob("*"):
+    if not path.is_file() or path.suffix.lower() not in {".xml", ".java", ".kt"}:
+        continue
+    try:
+        data = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        continue
+    data = data.replace("R.drawable.ic_mojo_full", "R.drawable.ic_veyron_mark")
+    data = data.replace("@drawable/ic_mojo_full", "@drawable/ic_veyron_mark")
+    data = data.replace("R.drawable.notif_icon", "R.drawable.ic_veyron_mark")
+    data = data.replace("@drawable/notif_icon", "@drawable/ic_veyron_mark")
+    data = data.replace("R.drawable.ic_pojav", "R.drawable.ic_veyron_mark")
+    data = data.replace("@drawable/ic_pojav", "@drawable/ic_veyron_mark")
+    path.write_text(data, encoding="utf-8")
+for path in APP.rglob("*"):
+    if path.is_file() and (path.name == "ic_mojo_full.webp" or path.name == "notif_icon.png" or path.name.lower().startswith("ic_pojav")):
+        path.unlink()
 
 # Keep adaptive launcher icons and the pre-Android-26 vector icon consistent.
 write_resource("mipmap-anydpi-v26/ic_launcher.xml", r"""
