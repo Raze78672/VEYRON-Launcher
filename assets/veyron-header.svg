@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">VEYRON Launcher</title>
+  <desc id="desc">Animated dark teal and cyan banner for VEYRON Launcher, an Android Minecraft Java Edition launcher project.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#061113"/>
+      <stop offset=".55" stop-color="#0A2528"/>
+      <stop offset="1" stop-color="#07191D"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#19D6D0"/>
+      <stop offset="1" stop-color="#7AF7E8"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#19D6D0" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#19D6D0" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse">
+      <path d="M44 0H0V44" fill="none" stroke="#8CF8EF" stroke-opacity=".07" stroke-width="1"/>
+    </pattern>
+    <filter id="soft"><feGaussianBlur stdDeviation="18"/></filter>
+  </defs>
+  <rect width="1200" height="360" rx="26" fill="url(#bg)"/>
+  <rect width="1200" height="360" rx="26" fill="url(#grid)"/>
+  <ellipse cx="920" cy="130" rx="300" ry="190" fill="url(#glow)" filter="url(#soft)">
+    <animate attributeName="opacity" values=".55;1;.55" dur="6s" repeatCount="indefinite"/>
+  </ellipse>
+  <g fill="none" stroke="url(#accent)" stroke-width="2" opacity=".55">
+    <path d="M760 0L1200 250">
+      <animate attributeName="stroke-dasharray" values="0 900;520 900;0 900" dur="8s" repeatCount="indefinite"/>
+    </path>
+    <path d="M900 0L1200 170" stroke-opacity=".35">
+      <animate attributeName="stroke-dasharray" values="0 700;380 700;0 700" dur="9s" repeatCount="indefinite"/>
+    </path>
+  </g>
+  <g transform="translate(82 92)">
+    <path d="M0 0L48 0L92 106L136 0L184 0L112 164L72 164Z" fill="none" stroke="url(#accent)" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M92 106L112 164" stroke="#E8FFFC" stroke-width="5" opacity=".8"/>
+  </g>
+  <text x="320" y="150" fill="#F1FFFE" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="800" letter-spacing="5">VEYRON</text>
+  <text x="324" y="204" fill="#7AF7E8" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="600" letter-spacing="8">LAUNCHER</text>
+  <rect x="324" y="230" width="270" height="3" rx="2" fill="url(#accent)">
+    <animate attributeName="width" values="70;270;70" dur="5s" repeatCount="indefinite"/>
+  </rect>
+  <text x="324" y="275" fill="#B6D8D6" font-family="Arial, Helvetica, sans-serif" font-size="19" letter-spacing="2">YOUR MINECRAFT. YOUR WAY.</text>
+  <g transform="translate(1000 278)">
+    <circle r="5" fill="#19D6D0">
+      <animate attributeName="r" values="4;7;4" dur="2.8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values=".6;1;.6" dur="2.8s" repeatCount="indefinite"/>
+    </circle>
+    <text x="18" y="6" fill="#9CC7C4" font-family="Arial, Helvetica, sans-serif" font-size="13" letter-spacing="2">ANDROID • JAVA</text>
+  </g>
+  <rect x="1" y="1" width="1198" height="358" rx="25" fill="none" stroke="#56E9DF" stroke-opacity=".22"/>
+</svg>
