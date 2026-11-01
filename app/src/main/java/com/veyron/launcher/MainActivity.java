@@ -400,8 +400,14 @@ public final class MainActivity extends Activity {
         if(version==null) {
             versionManager.fetchVersions(new VersionManager.VersionsCallback() {
                 @Override public void onSuccess(List<VersionManager.Version> versions,String release,String snapshot) {
-                    runOnUiThread(()->{versionCatalog=versions;latestRelease=release;latestSnapshot=snapshot;
-                        if(!isFinishing())downloadInstance(profile);});
+                    runOnUiThread(()->{
+                        versionCatalog=versions;latestRelease=release;latestSnapshot=snapshot;
+                        if("latest".equals(profile.version)&&!release.isEmpty()) {
+                            try { instanceManager.updateVersion(profile,release); }
+                            catch(Exception error) { toast("Could not save selected version: "+safeMessage(error)); return; }
+                        }
+                        if(!isFinishing())downloadInstance(profile);
+                    });
                 }
                 @Override public void onError(Exception error) {
                     runOnUiThread(()->new AlertDialog.Builder(MainActivity.this).setTitle("Could not load version")
