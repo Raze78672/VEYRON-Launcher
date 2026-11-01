@@ -76,9 +76,13 @@ public final class VersionManager {
     }
 
     public void install(Version version, InstallCallback callback) {
+        install(version, new File(context.getFilesDir(), "game"), callback);
+    }
+
+    public void install(Version version, File gameDirectory, InstallCallback callback) {
         new Thread(() -> {
             try {
-                File root = new File(context.getFilesDir(), "game/versions");
+                File root = new File(gameDirectory, "versions");
                 File directory = new File(root, version.id);
                 if (!directory.exists() && !directory.mkdirs()) {
                     throw new IllegalStateException("Could not create version directory.");
@@ -123,11 +127,19 @@ public final class VersionManager {
     }
 
     public File getVersionDirectory(String id) {
-        return new File(new File(context.getFilesDir(), "game/versions"), id);
+        return getVersionDirectory(id, new File(context.getFilesDir(), "game"));
+    }
+
+    public File getVersionDirectory(String id, File gameDirectory) {
+        return new File(new File(gameDirectory, "versions"), id);
     }
 
     public boolean isCoreInstalled(String id) {
-        File dir = getVersionDirectory(id);
+        return isCoreInstalled(id, new File(context.getFilesDir(), "game"));
+    }
+
+    public boolean isCoreInstalled(String id, File gameDirectory) {
+        File dir = getVersionDirectory(id, gameDirectory);
         return new File(dir, id + ".json").isFile() &&
                 new File(dir, id + ".jar").isFile();
     }
