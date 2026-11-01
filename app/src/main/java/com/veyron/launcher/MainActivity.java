@@ -74,17 +74,30 @@ public final class MainActivity extends Activity {
     }
     private void buildNavigation() {
         navItems.removeAllViews();
-        for (String page : pages) {
-            Button b = new Button(this);
-            b.setAllCaps(false); b.setText(page); b.setTextSize(12);
-            b.setTypeface(Typeface.DEFAULT, page.equals(currentPage) ? Typeface.BOLD : Typeface.NORMAL);
-            b.setGravity(Gravity.CENTER_VERTICAL); b.setPadding(dp(14),0,dp(8),0);
-            b.setTextColor(getColor(page.equals(currentPage) ? R.color.veyron_accent : R.color.veyron_muted));
-            b.setBackground(rounded(page.equals(currentPage) ? 0x3320D8C4 : 0x00111A22,
-                page.equals(currentPage) ? 0x6630D6C4 : 0x00000000));
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(42));
-            lp.bottomMargin = dp(5); navItems.addView(b, lp);
-            b.setOnClickListener(v -> showPage(page));
+        String[] glyphs = {"⌂","▦","◈","⇩","✣","▤","◎","⌘","⚙","≋"};
+        for (int i=0;i<pages.length;i++) {
+            final String page=pages[i];
+            final boolean active=page.equals(currentPage);
+            LinearLayout item=new LinearLayout(this);
+            item.setOrientation(LinearLayout.VERTICAL);
+            item.setGravity(Gravity.CENTER);
+            item.setPadding(dp(3),dp(7),dp(3),dp(6));
+            item.setBackground(rounded(active?0xFF183B3B:0x00101820,active?0xFF286B65:0x00000000));
+            TextView icon=new TextView(this);
+            icon.setText(glyphs[i]); icon.setTextSize(21);
+            icon.setGravity(Gravity.CENTER);
+            icon.setTextColor(getColor(active?R.color.veyron_accent:R.color.veyron_muted));
+            item.addView(icon,new LinearLayout.LayoutParams(-1,dp(28)));
+            TextView label=new TextView(this);
+            label.setText(page.equals("Java & Runtime")?"RUNTIME":page.toUpperCase());
+            label.setTextSize(7); label.setLetterSpacing(0.04f);
+            label.setGravity(Gravity.CENTER);
+            label.setMaxLines(1);
+            label.setTextColor(getColor(active?R.color.veyron_text:R.color.veyron_muted));
+            item.addView(label,new LinearLayout.LayoutParams(-1,dp(15)));
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(54));
+            lp.bottomMargin=dp(5); navItems.addView(item,lp);
+            item.setOnClickListener(v->showPage(page));
         }
     }
     private TextView text(String value, int size, boolean bold, int color) {
@@ -93,16 +106,25 @@ public final class MainActivity extends Activity {
         t.setPadding(0, dp(5), 0, dp(5)); return t;
     }
     private void heading(String title, String subtitle) {
-        TextView titleView=text(title,25,true,getColor(R.color.veyron_text));
-        titleView.setLetterSpacing(0.025f); content.addView(titleView);
-        content.addView(text(subtitle,11,false,getColor(R.color.veyron_muted)));
-        View gap = new View(this); content.addView(gap, new LinearLayout.LayoutParams(1, dp(18)));
+        TextView kicker=text("VEYRON  /  "+currentPage.toUpperCase(),9,true,getColor(R.color.veyron_accent));
+        kicker.setLetterSpacing(0.14f);
+        content.addView(kicker);
+        TextView titleView=text(title,24,true,getColor(R.color.veyron_text));
+        titleView.setLetterSpacing(-0.015f); titleView.setPadding(0,dp(3),0,dp(2));
+        content.addView(titleView);
+        TextView sub=text(subtitle,11,false,getColor(R.color.veyron_muted));
+        content.addView(sub);
+        View gap=new View(this); content.addView(gap,new LinearLayout.LayoutParams(1,dp(17)));
     }
     private LinearLayout createCard(String title, String body) {
-        LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(dp(17), dp(14), dp(17), dp(14)); box.setBackgroundResource(R.drawable.bg_panel);
-        TextView h = text(title, 15, true, getColor(R.color.veyron_text));
-        TextView d = text(body, 12, false, getColor(R.color.veyron_muted));
+        LinearLayout box=new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(16),dp(13),dp(16),dp(13));
+        box.setBackground(rounded(0xFF111A20,0xFF26383B));
+        TextView h=text(title.toUpperCase(),10,true,getColor(R.color.veyron_accent));
+        h.setLetterSpacing(0.09f);
+        TextView d=text(body,12,false,getColor(R.color.veyron_text));
+        d.setPadding(0,dp(5),0,0);
         box.addView(h); box.addView(d);
         return box;
     }
@@ -112,12 +134,18 @@ public final class MainActivity extends Activity {
         content.addView(box, lp); return box;
     }
     private Button action(String label, Runnable run) {
-        Button b = new Button(this); b.setText(label); b.setAllCaps(false); b.setTextSize(11);
-        b.setTextColor(getColor(R.color.veyron_text)); b.setMinHeight(dp(42));
-        b.setPadding(dp(16),0,dp(16),0); b.setBackground(rounded(0xFF17232D,0xFF263844));
-        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(44)); lp.bottomMargin=dp(7);
-        b.setLayoutParams(lp);
-        b.setOnClickListener(v -> run.run()); return b;
+        Button b=new Button(this);
+        b.setText(label); b.setAllCaps(false); b.setTextSize(10);
+        b.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        b.setLetterSpacing(0.04f);
+        b.setTextColor(getColor(R.color.veyron_text));
+        b.setMinHeight(dp(40)); b.setPadding(dp(15),0,dp(15),0);
+        boolean primary=label.toUpperCase().contains("PLAY")||label.toUpperCase().contains("DOWNLOAD");
+        b.setBackground(rounded(primary?0xFF087F72:0xFF182329,primary?0xFF19B8A4:0xFF2A4145));
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(43));
+        lp.bottomMargin=dp(7); b.setLayoutParams(lp);
+        b.setOnClickListener(v->run.run());
+        return b;
     }
     private void showPage(String page) {
         currentPage = page; buildNavigation(); content.removeAllViews();
@@ -138,23 +166,55 @@ public final class MainActivity extends Activity {
         InstanceManager.Profile active=selectedProfile();
         String selected=active==null?selectedVersion():active.version;
         boolean installed=active!=null&&instanceManager.isInstalled(active);
-        heading("YOUR WORLD. YOUR WAY.", "VEYRON Launcher  •  Android / Minecraft Java Edition");
-        card("ACTIVE INSTANCE", active==null?"No instance created":active.name+"  •  "+active.loader);
-        card("SELECTED VERSION", selected + (installed ? "  •  Core files installed" : "  •  Not downloaded"));
-        card("ACCOUNT", "No Microsoft account connected. Minecraft authentication is not configured.");
-        content.addView(action("MANAGE INSTANCES", () -> showPage("Instances")));
-        content.addView(action("BROWSE VERSIONS", () -> showPage("Versions")));
-        content.addView(action(installed ? "PLAY  •  SET UP RUNTIME TO CONTINUE" : "DOWNLOAD ACTIVE INSTANCE", () -> {
-            if (!installed) {
-                if(active!=null) downloadInstance(active); else showPage("Instances");
-                return;
-            }
+
+        TextView kicker=text("MINECRAFT JAVA  /  ANDROID",9,true,getColor(R.color.veyron_accent));
+        kicker.setLetterSpacing(0.16f); content.addView(kicker);
+        TextView title=text("Your next world\nstarts here.",29,true,getColor(R.color.veyron_text));
+        title.setLineSpacing(0,0.96f); title.setPadding(0,dp(5),0,dp(4)); content.addView(title);
+        content.addView(text("A focused home for your Minecraft instances.",11,false,getColor(R.color.veyron_muted)));
+
+        LinearLayout hero=new LinearLayout(this);
+        hero.setOrientation(LinearLayout.VERTICAL);
+        hero.setPadding(dp(20),dp(18),dp(20),dp(17));
+        GradientDrawable heroBg=new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+            new int[]{0xFF153B39,0xFF102629,0xFF101A22});
+        heroBg.setCornerRadius(dp(18)); heroBg.setStroke(dp(1),0xFF28605B);
+        hero.setBackground(heroBg);
+        LinearLayout.LayoutParams heroLp=new LinearLayout.LayoutParams(-1,-2);
+        heroLp.topMargin=dp(18); heroLp.bottomMargin=dp(13); content.addView(hero,heroLp);
+        TextView status=text(installed?"INSTANCE READY":"READY WHEN YOU ARE",9,true,0xFF6DE1CF);
+        status.setLetterSpacing(0.12f); hero.addView(status);
+        TextView heroName=text(active==null?"No instance selected":active.name,22,true,0xFFFFFFFF);
+        heroName.setPadding(0,dp(6),0,dp(2)); hero.addView(heroName);
+        hero.addView(text((active==null?"Create an instance to get started":active.version+"  •  "+active.loader+"  •  "+(installed?"Core files installed":"Not downloaded")),11,false,0xFFB4C9C7));
+        View spacer=new View(this); hero.addView(spacer,new LinearLayout.LayoutParams(1,dp(14)));
+        hero.addView(action(installed?"PLAY  ·  RUNTIME SETUP REQUIRED":"DOWNLOAD INSTANCE",()->{
+            if(!installed){if(active!=null)downloadInstance(active);else showPage("Instances");return;}
             new AlertDialog.Builder(this).setTitle("Game launch is not ready")
-                .setMessage("The Minecraft version metadata and client JAR are installed. VEYRON still needs the required libraries, assets, a compatible Java runtime, renderer/native integration and a verified Microsoft account before it can safely launch the game.")
-                .setPositiveButton("OPEN JAVA & RUNTIME", (d,w) -> showPage("Java & Runtime"))
-                .setNegativeButton("OK", null).show();
+                .setMessage("The Minecraft version metadata and client JAR are installed. VEYRON still needs libraries, assets, a compatible Java runtime, renderer/native integration and a verified Microsoft account before it can launch the game.")
+                .setPositiveButton("OPEN RUNTIME", (d,w)->showPage("Java & Runtime"))
+                .setNegativeButton("OK",null).show();
         }));
-        card("INSTALLER STATUS", "Per-instance folders and verified Minecraft core downloads are enabled. Libraries, assets, loaders, Java runtime and actual game launch are still in development.");
+
+        TextView section=text("QUICK ACCESS",9,true,getColor(R.color.veyron_muted));
+        section.setLetterSpacing(0.14f); section.setPadding(0,dp(8),0,dp(8)); content.addView(section);
+        LinearLayout quick=new LinearLayout(this); quick.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams qlp=new LinearLayout.LayoutParams(-1,-2); qlp.bottomMargin=dp(12); content.addView(quick,qlp);
+        addQuickTile(quick,"INSTANCES",active==null?"Create profile":active.name,()->showPage("Instances"));
+        addQuickTile(quick,"VERSIONS",selected,()->showPage("Versions"));
+        addQuickTile(quick,"ACCOUNTS","Not connected",()->showPage("Accounts"));
+        card("INSTALLATION STATUS","Verified version metadata and client JAR downloads are available. Libraries, assets, loaders, Java runtime and actual game launch are still in development.");
+    }
+
+    private void addQuickTile(LinearLayout parent,String label,String value,Runnable click) {
+        LinearLayout tile=new LinearLayout(this); tile.setOrientation(LinearLayout.VERTICAL);
+        tile.setPadding(dp(11),dp(11),dp(9),dp(10));
+        tile.setBackground(rounded(0xFF111A20,0xFF26383B));
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,-2,1f);
+        lp.setMargins(dp(3),0,dp(3),0); parent.addView(tile,lp);
+        TextView h=text(label,8,true,getColor(R.color.veyron_accent)); h.setLetterSpacing(0.08f);
+        TextView v=text(value,10,true,getColor(R.color.veyron_text)); v.setMaxLines(1);
+        tile.addView(h); tile.addView(v); tile.setOnClickListener(vw->click.run());
     }
 
     private void versions() {
