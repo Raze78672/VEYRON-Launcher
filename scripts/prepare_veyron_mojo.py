@@ -606,7 +606,7 @@ replace_once(launcher, 'public boolean setFullscreen() {\n        return false;\
 replace_once(launcher, 'private ImageButton mSettingsButton;\n',
              'private ImageButton mSettingsButton;\n    private ImageButton mHomeButton;\n')
 replace_once(launcher, 'mSettingsButton.setOnClickListener(mSettingButtonListener);',
-             'mSettingsButton.setOnClickListener(mSettingButtonListener);\\n        mHomeButton.setOnClickListener(v -> Tools.backToMainMenu(this));\\n        git.artdeell.mojo.utils.VeyronJelly.attach(mSettingsButton);\\n        git.artdeell.mojo.utils.VeyronJelly.attach(mHomeButton);\\n        git.artdeell.mojo.utils.VeyronJelly.attach(findViewById(R.id.account_spinner));')
+             'mSettingsButton.setOnClickListener(mSettingButtonListener);\n        mHomeButton.setOnClickListener(v -> Tools.backToMainMenu(this));\n        git.artdeell.mojo.utils.VeyronJelly.attach(mSettingsButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mHomeButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(findViewById(R.id.account_spinner));')
 replace_once(launcher, 'mSettingsButton = findViewById(R.id.setting_button);',
              'mSettingsButton = findViewById(R.id.setting_button);\n        mHomeButton = findViewById(R.id.home_nav_button);')
 print("VEYRON app identity, universal icon, full-screen landscape shell and redesigned home applied.")
