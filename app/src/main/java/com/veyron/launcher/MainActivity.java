@@ -450,7 +450,8 @@ public final class MainActivity extends Activity {
                 String value=input.getText().toString().trim(); if(value.isEmpty())return;
                 for(InstanceManager.Profile p:instanceManager.all())if(!p.id.equals(profile.id)&&p.name.equalsIgnoreCase(value)){toast("Name already exists.");return;}
                 String old=profile.name;
-                try {instanceManager.rename(profile,value); if(old.equals(selectedInstance()))getPreferences(0).edit().putString(SELECTED,value).apply(); showPage("Instances");}
+                boolean wasSelected=old.equals(getPreferences(0).getString(SELECTED,"Default"));
+                try {instanceManager.rename(profile,value); if(wasSelected)getPreferences(0).edit().putString(SELECTED,value).apply(); showPage("Instances");}
                 catch(Exception error){toast(safeMessage(error));}
             }).setNegativeButton("CANCEL",null).show();
     }
@@ -459,8 +460,9 @@ public final class MainActivity extends Activity {
         new AlertDialog.Builder(this).setTitle("Delete "+profile.name+"?")
             .setMessage("This removes the instance from your library. Its files are kept safely on storage for now; no game data will be erased.")
             .setPositiveButton("REMOVE",(d,w)->{
+                boolean wasSelected=profile.name.equals(getPreferences(0).getString(SELECTED,"Default"));
                 instanceManager.delete(profile);
-                if(profile.name.equals(selectedInstance())) {
+                if(wasSelected) {
                     List<InstanceManager.Profile> remaining=instanceManager.all();
                     getPreferences(0).edit().putString(SELECTED,remaining.isEmpty()?"":remaining.get(0).name).apply();
                 }
