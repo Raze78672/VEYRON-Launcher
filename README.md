@@ -10,7 +10,7 @@ VEYRON Launcher is an Android launcher for Minecraft: Java Edition, built on the
 - Legacy prototype: `app/` (not the application module used by the current build).
 - Third-party licensing: see `licenses/` and the notices shipped with the upstream source.
 
-The uploaded `MojoLauncher-3_openjdk (1).zip` is retained in the repository. The pinned source submodule is used for reproducible builds, including the upstream nested native and installer modules.
+The uploaded source archive is retained in the repository when present. The pinned Android launcher source revision is used for reproducible builds, including its nested native and installer modules.
 
 ## Build
 
@@ -21,7 +21,7 @@ python3 scripts/prepare_veyron_mojo.py
 gradle :app:assembleFullDebug
 ```
 
-The resulting APK is uploaded as the `VEYRON-Launcher-Mojo-based-debug` workflow artifact.
+The resulting APK is uploaded as the `VEYRON-Launcher-debug` workflow artifact.
 
 ## Important
 
