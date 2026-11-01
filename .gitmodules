@@ -1,0 +1,4 @@
+[submodule "vendor/mojolauncher"]
+	path = vendor/mojolauncher
+	url = https://github.com/MojoLauncher/MojoLauncher.git
+	branch = v3_openjdk

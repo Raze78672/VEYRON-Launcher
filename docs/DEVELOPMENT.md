@@ -2,13 +2,15 @@
 
 ## Current state
 
-This commit establishes the original Android Java/XML application foundation and a landscape home screen. It does **not** yet implement Microsoft authentication, Minecraft installation, or game execution.
+The Android Java/XML application foundation and landscape VEYRON interface are in the `:app` module. The MojoLauncher v3_openjdk source is pinned as a vendor submodule for the runtime and launcher-engine integration work. The current `:app` module is not yet wired to that engine, so Microsoft sign-in, full Minecraft installation, and game execution must not be described as complete.
 
 ## Build
 
-Open the repository in Android Studio with Android SDK 35 installed. Use JDK 17 and Gradle 8.9 or a compatible Gradle installation. The Android Gradle Plugin is 8.7.3.
+Open the repository in Android Studio with Android SDK 35 installed. Use JDK 17 and Gradle 8.9 for the existing VEYRON `:app` module. The Android Gradle Plugin is 8.7.3.
 
 The application module is `:app`; application ID: `com.veyron.launcher`.
+
+The MojoLauncher reference source is checked out at `vendor/mojolauncher` when Git submodules are initialized recursively. See [MOJO_ENGINE_INTEGRATION.md](MOJO_ENGINE_INTEGRATION.md) for the pinned revision and integration boundaries.
 
 ## Microsoft sign-in integration
 
