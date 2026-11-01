@@ -363,5 +363,7 @@ replace_once(launcher, 'mSettingsButton.setOnClickListener(mSettingButtonListene
              'mSettingsButton.setOnClickListener(mSettingButtonListener);\n        mHomeButton.setOnClickListener(v -> Tools.backToMainMenu(this));')
 replace_once(launcher, 'mSettingsButton = findViewById(R.id.setting_button);',
              'mSettingsButton = findViewById(R.id.setting_button);\n        mHomeButton = findViewById(R.id.home_nav_button);')
+replace_once(launcher, 'mProgressLayout = findViewById(R.id.progress_layout);',
+             'mProgressLayout = findViewById(R.id.progress_layout);\n        mHomeButton = findViewById(R.id.home_nav_button);')
 
 print("VEYRON app identity, universal icon, full-screen landscape shell and redesigned home applied.")
