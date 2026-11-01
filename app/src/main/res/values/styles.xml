@@ -1,0 +1,10 @@
+<resources>
+    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">@color/veyron_bg</item>
+        <item name="android:navigationBarColor">@color/veyron_bg</item>
+        <item name="android:windowBackground">@color/veyron_bg</item>
+        <item name="android:colorAccent">@color/veyron_accent</item>
+    </style>
+</resources>
