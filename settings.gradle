@@ -1,4 +1,41 @@
-pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
-dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url "https://jitpack.io" }
+    }
+}
+
 rootProject.name = "VEYRON-Launcher"
+
+// The real Android launcher application is MojoLauncher, checked out as a pinned
+// source submodule. Keep the old prototype under /app as a reference only.
 include(":app")
+project(":app").projectDir = file("vendor/mojolauncher/app_mojo")
+
+include(":forge_installer")
+project(":forge_installer").projectDir = file("vendor/mojolauncher/forge_installer")
+
+include(":NoBlocklist")
+project(":NoBlocklist").projectDir = file("vendor/mojolauncher/NoBlocklist")
+
+include(":glfw:jni_bindings")
+project(":glfw").projectDir = file("vendor/mojolauncher/glfw")
+project(":glfw:jni_bindings").projectDir = file("vendor/mojolauncher/glfw/jni_bindings")
+
+include(":mojoexec:jni_bindings")
+project(":mojoexec").projectDir = file("vendor/mojolauncher/mojoexec")
+project(":mojoexec:jni_bindings").projectDir = file("vendor/mojolauncher/mojoexec/jni_bindings")
+
+include(":sdl:jni_bindings")
+project(":sdl").projectDir = file("vendor/mojolauncher/sdl")
+project(":sdl:jni_bindings").projectDir = file("vendor/mojolauncher/sdl/jni_bindings")
