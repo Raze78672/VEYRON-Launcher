@@ -144,6 +144,11 @@ write_resource("layout/activity_mojo_ui.xml", r"""
 </LinearLayout>
 """)
 
+# The app is forced to landscape, so Android selects layout-land at runtime.
+# Keep the landscape-qualified activity shell identical to the base shell.
+write_resource("layout-land/activity_mojo_ui.xml",
+               (RES / "layout" / "activity_mojo_ui.xml").read_text(encoding="utf-8"))
+
 # Landscape home: workspace/action panel on the left and selected-version / Play panel on the right.
 write_resource("layout-land/fragment_launcher.xml", r"""
 <androidx.constraintlayout.widget.ConstraintLayout
@@ -363,7 +368,4 @@ replace_once(launcher, 'mSettingsButton.setOnClickListener(mSettingButtonListene
              'mSettingsButton.setOnClickListener(mSettingButtonListener);\n        mHomeButton.setOnClickListener(v -> Tools.backToMainMenu(this));')
 replace_once(launcher, 'mSettingsButton = findViewById(R.id.setting_button);',
              'mSettingsButton = findViewById(R.id.setting_button);\n        mHomeButton = findViewById(R.id.home_nav_button);')
-replace_once(launcher, 'mProgressLayout = findViewById(R.id.progress_layout);',
-             'mProgressLayout = findViewById(R.id.progress_layout);\n        mHomeButton = findViewById(R.id.home_nav_button);')
-
 print("VEYRON app identity, universal icon, full-screen landscape shell and redesigned home applied.")
