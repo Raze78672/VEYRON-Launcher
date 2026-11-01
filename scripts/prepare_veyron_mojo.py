@@ -20,7 +20,9 @@ def write_resource(relative: str, content: str) -> None:
     target.write_text(content.strip() + "\n", encoding="utf-8")
 
 # Lightweight springy press feedback for VEYRON controls.
-write_resource("java/git/artdeell/mojo/utils/VeyronJelly.java", r"""
+jelly_java = APP / "src" / "main" / "java" / "git" / "artdeell" / "mojo" / "utils" / "VeyronJelly.java"
+jelly_java.parent.mkdir(parents=True, exist_ok=True)
+jelly_java.write_text(r"""
 package git.artdeell.mojo.utils;
 
 import android.view.MotionEvent;
@@ -53,7 +55,7 @@ public final class VeyronJelly {
         });
     }
 }
-""")
+""".strip() + "\n", encoding="utf-8")
 
 # VEYRON emblem: a compact vector mark, used by every Android launcher icon size.
 write_resource("drawable/ic_veyron_mark.xml", r"""
@@ -198,6 +200,11 @@ write_resource("layout/activity_mojo_ui.xml", r"""
 </LinearLayout>
 """)
 
+launcher_activity = APP / "src" / "main" / "java" / "git" / "artdeell" / "mojo" / "LauncherActivity.java"
+replace_once(launcher_activity,
+             '        mSettingsButton.setOnClickListener(mSettingButtonListener);',
+             '        mSettingsButton.setOnClickListener(mSettingButtonListener);\\n        git.artdeell.mojo.utils.VeyronJelly.attach(mSettingsButton);\\n        git.artdeell.mojo.utils.VeyronJelly.attach(findViewById(R.id.home_nav_button));\\n        git.artdeell.mojo.utils.VeyronJelly.attach(findViewById(R.id.account_spinner));')
+
 # The app is forced to landscape, so Android selects layout-land at runtime.
 # Keep the landscape-qualified activity shell identical to the base shell.
 write_resource("layout-land/activity_mojo_ui.xml",
@@ -208,9 +215,6 @@ replace_once(select_auth, '        mElyByButton.setOnClickListener(v -> launchAu
 
 main_menu = MOJO / "app_mojo" / "src" / "main" / "java" / "git" / "artdeell" / "mojo" / "fragments" / "MainMenuFragment.java"
 replace_once(main_menu, '        mOpenDirectoryButton.setOnClickListener((v)-> openGameDirectory(v.getContext()));', '        mOpenDirectoryButton.setOnClickListener((v)-> openGameDirectory(v.getContext()));\n        git.artdeell.mojo.utils.VeyronJelly.attach(mDiscordButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mCustomControlButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mInstallJarButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mShareLogsButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mOpenDirectoryButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mEditProfileButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mPlayButton);')
-
-select_auth = MOJO / "app_mojo" / "src" / "main" / "java" / "git" / "artdeell" / "mojo" / "fragments" / "SelectAuthFragment.java"
-replace_once(select_auth, '        mElyByButton.setOnClickListener(v -> launchAuthFragment(ElyByLoginFragment.class, ElyByLoginFragment.TAG));', '        mElyByButton.setOnClickListener(v -> launchAuthFragment(ElyByLoginFragment.class, ElyByLoginFragment.TAG));\n        git.artdeell.mojo.utils.VeyronJelly.attach(mMicrosoftButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mLocalButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mElyByButton);')
 
 # Landscape home: workspace/action panel on the left and selected-version / Play panel on the right.
 write_resource("layout-land/fragment_launcher.xml", r"""
@@ -520,6 +524,7 @@ write_resource("layout/fragment_local_login.xml", r"""
 """)
 
 replace_once(APP / "src" / "main" / "res" / "values" / "strings.xml", '<string name="social_media_invite" translatable="false">https://discord.gg/VHdwQFsaGX</string>', '<string name="social_media_invite" translatable="false">https://discord.gg/A8NwCBEe52</string>')
+replace_once(APP / "src" / "main" / "res" / "values" / "strings.xml", '<string name="mcl_button_social_media">Social Media</string>', '<string name="mcl_button_social_media">Discord Community</string>')
 
 # Apply VEYRON colors to the existing launcher and preference theme.
 colors = APP / "src" / "main" / "res" / "values" / "colors.xml"
