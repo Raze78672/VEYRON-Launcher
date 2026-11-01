@@ -68,12 +68,16 @@ public final class MainActivity extends Activity {
         content.addView(text(subtitle, 12, false, getColor(R.color.veyron_muted)));
         View gap = new View(this); content.addView(gap, new LinearLayout.LayoutParams(1, dp(15)));
     }
-    private LinearLayout card(String title, String body) {
+    private LinearLayout createCard(String title, String body) {
         LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL);
         box.setPadding(dp(16), dp(13), dp(16), dp(13)); box.setBackgroundResource(R.drawable.bg_panel);
         TextView h = text(title, 15, true, getColor(R.color.veyron_text));
         TextView d = text(body, 12, false, getColor(R.color.veyron_muted));
         box.addView(h); box.addView(d);
+        return box;
+    }
+    private LinearLayout card(String title, String body) {
+        LinearLayout box = createCard(title, body);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2); lp.bottomMargin = dp(10);
         content.addView(box, lp); return box;
     }
@@ -176,7 +180,7 @@ public final class MainActivity extends Activity {
         for (VersionManager.Version version : versionCatalog) {
             if (!versionSearch.trim().isEmpty() &&
                     !version.id.toLowerCase().contains(versionSearch.trim().toLowerCase())) continue;
-            LinearLayout row = card(version.id,
+            LinearLayout row = createCard(version.id,
                     version.type.toUpperCase() +
                     (version.id.equals(latestRelease) ? "  •  LATEST RELEASE" : "") +
                     (version.id.equals(latestSnapshot) ? "  •  LATEST SNAPSHOT" : "") +
@@ -242,12 +246,15 @@ public final class MainActivity extends Activity {
             if (!directory.isDirectory()) continue;
             String id = directory.getName();
             boolean complete = versionManager.isCoreInstalled(id);
-            LinearLayout item = card(id, complete ? "Metadata + client JAR present" : "Incomplete download");
+            LinearLayout item = createCard(id, complete ? "Metadata + client JAR present" : "Incomplete download");
             item.addView(action("SELECT VERSION", () -> {
                 getPreferences(0).edit().putString(SELECTED_VERSION, id).apply();
                 toast("Selected " + id);
                 showPage("Home");
             }));
+            LinearLayout.LayoutParams itemLp = new LinearLayout.LayoutParams(-1, -2);
+            itemLp.bottomMargin = dp(10);
+            content.addView(item, itemLp);
             count++;
         }
         if (count == 0) card("NO INSTALLED VERSIONS", "Browse Versions to start an install.");
