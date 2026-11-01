@@ -11,8 +11,10 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.text.Editable;
+import android.text.TextWatcher;
 import org.json.JSONArray;
-import org.json.JSONObject;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,15 +22,23 @@ public final class MainActivity extends Activity {
     private static final String PREFS = "veyron_launcher";
     private static final String INSTANCES = "instances";
     private static final String SELECTED = "selected_instance";
+    private static final String SELECTED_VERSION = "selected_version";
     private final String[] pages = {"Home","Instances","Versions","Downloads","Mods","Worlds","Accounts","Java & Runtime","Settings","Console"};
     private LinearLayout navItems, content;
     private String currentPage = "Home";
+    private VersionManager versionManager;
+    private List<VersionManager.Version> versionCatalog = new ArrayList<>();
+    private String latestRelease = "";
+    private String latestSnapshot = "";
+    private String versionSearch = "";
+    private TextView versionStatus;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_main);
         navItems = findViewById(R.id.navItems);
         content = findViewById(R.id.screenContent);
+        versionManager = new VersionManager(this);
         seedInstances();
         buildNavigation();
         showPage("Home");
@@ -76,26 +86,179 @@ public final class MainActivity extends Activity {
         switch (page) {
             case "Home": home(); break;
             case "Instances": instances(); break;
-            case "Versions": listing("VERSIONS", "Install and manage game versions", "Version manifest integration is not connected yet.", "Vanilla, snapshots, Fabric, Forge and NeoForge are planned."); break;
-            case "Downloads": listing("DOWNLOAD CENTER", "Track launcher downloads", "No active downloads.", "Version files, libraries, assets, mods, modpacks, resource packs and shaders will use a shared queue."); break;
-            case "Mods": listing("MOD MANAGER", "Manage mods per instance", "Choose an instance to manage its mods.", "Enable, disable, update and remove compatible mods. Mod discovery providers are not connected yet."); break;
+            case "Versions": versions(); break;
+            case "Downloads": downloads(); break;
+            case "Mods": listing("MOD MANAGER", "Manage mods per instance", "Choose an instance to manage its mods.", "Mod discovery, compatibility checks and per-instance mod file management are not connected yet."); break;
             case "Worlds": listing("WORLDS", "Your local Minecraft worlds", "World scanning is not connected yet.", "Worlds will be listed per instance with safe folder-aware management."); break;
             case "Accounts": accounts(); break;
-            case "Java & Runtime": listing("JAVA & RUNTIME", "Runtime compatibility and selection", "No Java runtime has been configured.", "Runtime installation, architecture checks and device compatibility diagnostics are planned."); break;
+            case "Java & Runtime": listing("JAVA & RUNTIME", "Runtime compatibility and selection", "No Java runtime has been configured.", "A compatible ARM64 Java runtime, native library loading and device checks are still required before launch."); break;
             case "Settings": settings(); break;
-            case "Console": listing("CONSOLE & LOGS", "Launcher and game diagnostics", "No game process is running.", "Live process output, log export and crash-report inspection will appear here."); break;
+            case "Console": listing("CONSOLE & LOGS", "Launcher and game diagnostics", "No game process is running.", "Live process output and crash-report inspection will be connected with the game process manager."); break;
         }
     }
     private void home() {
+        String selected = selectedVersion();
+        boolean installed = versionManager.isCoreInstalled(selected);
         heading("YOUR WORLD. YOUR WAY.", "VEYRON Launcher • Android / Minecraft Java Edition");
         card("ACTIVE INSTANCE", selectedInstance() + "  •  Local profile");
-        card("ACCOUNT", "No Microsoft account connected. Sign-in integration is not configured.");
+        card("SELECTED VERSION", selected + (installed ? "  •  Core files installed" : "  •  Not installed"));
+        card("ACCOUNT", "No Microsoft account connected. Minecraft authentication is not configured.");
         content.addView(action("MANAGE INSTANCES", () -> showPage("Instances")));
         content.addView(action("BROWSE VERSIONS", () -> showPage("Versions")));
-        Button play = action("PLAY  •  RUNTIME NOT READY", () -> Toast.makeText(this, "Game runtime integration is not ready yet.", Toast.LENGTH_LONG).show());
-        play.setEnabled(false); content.addView(play);
-        card("DEVELOPMENT STATUS", "UI and local instance profiles are available. Authentication, downloads, Java runtime and renderer are still integration tasks.");
+        content.addView(action(installed ? "PLAY  •  SET UP RUNTIME TO CONTINUE" : "INSTALL SELECTED VERSION", () -> {
+            if (!installed) {
+                showPage("Versions");
+                return;
+            }
+            new AlertDialog.Builder(this).setTitle("Game launch is not ready")
+                .setMessage("The Minecraft version metadata and client JAR are installed. VEYRON still needs the required libraries, assets, a compatible Java runtime, renderer/native integration and a verified Microsoft account before it can safely launch the game.")
+                .setPositiveButton("OPEN JAVA & RUNTIME", (d,w) -> showPage("Java & Runtime"))
+                .setNegativeButton("OK", null).show();
+        }));
+        card("INSTALLER STATUS", "Official Mojang version metadata and SHA-1-verified client JAR downloads are available. Full game assembly and Android runtime launch are still in development.");
     }
+
+    private void versions() {
+        heading("MINECRAFT VERSIONS", "Official Mojang version manifest • Vanilla catalogue");
+        versionStatus = text("Loading official version catalogue…", 12, false, getColor(R.color.veyron_muted));
+        content.addView(versionStatus);
+        EditText search = new EditText(this);
+        search.setSingleLine(true); search.setTextSize(13); search.setHint("Search version (e.g. 1.21.4)");
+        search.setText(versionSearch);
+        LinearLayout.LayoutParams searchLp = new LinearLayout.LayoutParams(-1, dp(48));
+        searchLp.bottomMargin = dp(10); content.addView(search, searchLp);
+        LinearLayout results = new LinearLayout(this);
+        results.setOrientation(LinearLayout.VERTICAL);
+        content.addView(results, new LinearLayout.LayoutParams(-1, -2));
+        search.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s,int st,int count,int after) {}
+            @Override public void onTextChanged(CharSequence s,int start,int before,int count) {
+                versionSearch = s.toString();
+                renderVersionRows(results);
+            }
+            @Override public void afterTextChanged(Editable e) {}
+        });
+        loadVersionCatalog(results);
+    }
+
+    private void loadVersionCatalog(LinearLayout results) {
+        if (!versionCatalog.isEmpty()) {
+            renderVersionRows(results);
+            versionStatus.setText("Latest release: " + latestRelease + "  •  Latest snapshot: " + latestSnapshot);
+            return;
+        }
+        versionManager.fetchVersions(new VersionManager.VersionsCallback() {
+            @Override public void onSuccess(List<VersionManager.Version> versions, String release, String snapshot) {
+                runOnUiThread(() -> {
+                    versionCatalog = versions; latestRelease = release; latestSnapshot = snapshot;
+                    if (!isFinishing() && "Versions".equals(currentPage)) {
+                        versionStatus.setText("Latest release: " + latestRelease + "  •  Latest snapshot: " + latestSnapshot);
+                        renderVersionRows(results);
+                    }
+                });
+            }
+            @Override public void onError(Exception error) {
+                runOnUiThread(() -> {
+                    if (!isFinishing() && "Versions".equals(currentPage)) {
+                        versionStatus.setText("Could not load the official catalogue: " + safeMessage(error));
+                        results.removeAllViews();
+                        results.addView(action("RETRY", () -> { versionCatalog.clear(); loadVersionCatalog(results); }));
+                    }
+                });
+            }
+        });
+    }
+
+    private void renderVersionRows(LinearLayout target) {
+        target.removeAllViews();
+        if (versionCatalog.isEmpty()) return;
+        int shown = 0;
+        for (VersionManager.Version version : versionCatalog) {
+            if (!versionSearch.trim().isEmpty() &&
+                    !version.id.toLowerCase().contains(versionSearch.trim().toLowerCase())) continue;
+            LinearLayout row = card(version.id,
+                    version.type.toUpperCase() +
+                    (version.id.equals(latestRelease) ? "  •  LATEST RELEASE" : "") +
+                    (version.id.equals(latestSnapshot) ? "  •  LATEST SNAPSHOT" : "") +
+                    (versionManager.isCoreInstalled(version.id) ? "  •  CORE INSTALLED" : ""));
+            row.addView(action(version.id.equals(selectedVersion()) ? "SELECTED" : "SELECT VERSION",
+                    () -> {
+                        getPreferences(0).edit().putString(SELECTED_VERSION, version.id).apply();
+                        toast("Selected " + version.id);
+                        showPage("Versions");
+                    }));
+            if (!versionManager.isCoreInstalled(version.id)) {
+                row.addView(action("DOWNLOAD CORE FILES", () -> installVersion(version)));
+            }
+            target.addView(row);
+            shown++;
+            if (shown >= 45 && versionSearch.trim().isEmpty()) break;
+        }
+        if (shown == 0) target.addView(text("No matching versions found.", 12, false, getColor(R.color.veyron_muted)));
+        else if (versionSearch.trim().isEmpty()) target.addView(text("Showing the 45 newest versions. Search to find another release.", 11, false, getColor(R.color.veyron_muted)));
+    }
+
+    private void installVersion(VersionManager.Version version) {
+        new AlertDialog.Builder(this).setTitle("Install " + version.id + "?")
+            .setMessage("VEYRON will download the official version metadata and client JAR, then verify the published SHA-1 hashes. Libraries, assets and runtime are separate unfinished steps.")
+            .setPositiveButton("DOWNLOAD", (d,w) -> {
+                Toast.makeText(this, "Downloading " + version.id + "…", Toast.LENGTH_LONG).show();
+                versionManager.install(version, new VersionManager.InstallCallback() {
+                    @Override public void onProgress(String message) {
+                        runOnUiThread(() -> { if (!isFinishing()) toast(message); });
+                    }
+                    @Override public void onSuccess(File directory) {
+                        runOnUiThread(() -> {
+                            if (isFinishing()) return;
+                            getPreferences(0).edit().putString(SELECTED_VERSION, version.id).apply();
+                            new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("Core files installed")
+                                .setMessage(version.id + " metadata and client JAR downloaded and verified. Full game installation and Play support are not ready yet.")
+                                .setPositiveButton("OK", (dialog,which) -> showPage("Versions")).show();
+                        });
+                    }
+                    @Override public void onError(Exception error) {
+                        runOnUiThread(() -> {
+                            if (!isFinishing()) new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("Installation failed").setMessage(safeMessage(error))
+                                .setPositiveButton("OK", null).show();
+                        });
+                    }
+                });
+            }).setNegativeButton("CANCEL", null).show();
+    }
+
+    private void downloads() {
+        heading("DOWNLOAD CENTER", "Minecraft version core files stored in app-private storage.");
+        File root = new File(getFilesDir(), "game/versions");
+        File[] directories = root.listFiles();
+        if (directories == null || directories.length == 0) {
+            card("NO INSTALLED VERSIONS", "Open Versions to browse the official catalogue and download a version.");
+            content.addView(action("BROWSE VERSIONS", () -> showPage("Versions")));
+            return;
+        }
+        int count = 0;
+        for (File directory : directories) {
+            if (!directory.isDirectory()) continue;
+            String id = directory.getName();
+            boolean complete = versionManager.isCoreInstalled(id);
+            LinearLayout item = card(id, complete ? "Metadata + client JAR present" : "Incomplete download");
+            item.addView(action("SELECT VERSION", () -> {
+                getPreferences(0).edit().putString(SELECTED_VERSION, id).apply();
+                toast("Selected " + id);
+                showPage("Home");
+            }));
+            count++;
+        }
+        if (count == 0) card("NO INSTALLED VERSIONS", "Browse Versions to start an install.");
+    }
+
+    private String selectedVersion() { return getPreferences(0).getString(SELECTED_VERSION, "latest"); }
+    private String safeMessage(Exception error) {
+        String message = error.getMessage();
+        return message == null || message.trim().isEmpty() ? error.getClass().getSimpleName() : message;
+    }
+
     private void instances() {
         heading("INSTANCES", "Independent profiles for versions, mods and game directories.");
         content.addView(action("+ CREATE INSTANCE", this::createInstance));
@@ -133,8 +296,8 @@ public final class MainActivity extends Activity {
     private String selectedInstance(){return getPreferences(0).getString(SELECTED,"Default");}
     private void accounts() {
         heading("ACCOUNTS", "Connect and switch game profiles.");
-        card("MICROSOFT", "OAuth sign-in with authorization code + PKCE is planned. No password fields will be used.");
-        content.addView(action("MICROSOFT SIGN-IN • NOT CONFIGURED", () -> new AlertDialog.Builder(this).setTitle("Microsoft sign-in").setMessage("OAuth app registration and the Xbox/Minecraft token exchange are not implemented yet.").setPositiveButton("OK",null).show()));
+        card("MICROSOFT", "OAuth sign-in with authorization code + PKCE is not implemented yet. No password fields will be used.");
+        content.addView(action("SIGN-IN NOT AVAILABLE YET", () -> new AlertDialog.Builder(this).setTitle("Microsoft sign-in").setMessage("The supported OAuth flow and Xbox/Minecraft entitlement checks still need implementation.").setPositiveButton("OK",null).show()));
         card("LOCAL PROFILE", "No authenticated Minecraft profile is available.");
     }
     private void settings() {
@@ -144,10 +307,10 @@ public final class MainActivity extends Activity {
         card("CONTROLS", "Touch controls, keyboard and mouse mapping are planned.");
         card("RENDERER", "Renderer selection will only show options that are actually bundled and compatible.");
         card("APPEARANCE", "VEYRON dark theme • Cyan accent");
-        card("STORAGE", "Instance profiles are stored locally. Game directory management is not implemented yet.");
+        card("STORAGE", "Version metadata and client JARs are stored in app-private storage under game/versions.");
     }
     private void listing(String title,String subtitle,String status,String detail) {
-        heading(title,subtitle); card("STATUS",status); card("PLANNED",detail);
+        heading(title,subtitle); card("STATUS",status); card("DETAIL",detail);
     }
     private void toast(String value){Toast.makeText(this,value,Toast.LENGTH_SHORT).show();}
 }
