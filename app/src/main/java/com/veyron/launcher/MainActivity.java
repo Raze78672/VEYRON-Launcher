@@ -155,6 +155,9 @@ public final class MainActivity extends Activity {
             @Override public void onSuccess(List<VersionManager.Version> versions, String release, String snapshot) {
                 runOnUiThread(() -> {
                     versionCatalog = versions; latestRelease = release; latestSnapshot = snapshot;
+                    if ("latest".equals(selectedVersion()) && !release.isEmpty()) {
+                        getPreferences(0).edit().putString(SELECTED_VERSION, release).apply();
+                    }
                     if (!isFinishing() && "Versions".equals(currentPage)) {
                         versionStatus.setText("Latest release: " + latestRelease + "  •  Latest snapshot: " + latestSnapshot);
                         renderVersionRows(results);
