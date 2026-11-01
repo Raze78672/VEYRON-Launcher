@@ -2,6 +2,11 @@ package com.veyron.launcher;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.view.WindowManager;
+import android.graphics.drawable.GradientDrawable;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.graphics.Typeface;
 import android.view.Gravity;
@@ -27,6 +32,7 @@ public final class MainActivity extends Activity {
     private LinearLayout navItems, content;
     private String currentPage = "Home";
     private VersionManager versionManager;
+    private InstanceManager instanceManager;
     private List<VersionManager.Version> versionCatalog = new ArrayList<>();
     private String latestRelease = "";
     private String latestSnapshot = "";
@@ -35,26 +41,49 @@ public final class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        setImmersiveMode();
         setContentView(R.layout.activity_main);
         navItems = findViewById(R.id.navItems);
         content = findViewById(R.id.screenContent);
         versionManager = new VersionManager(this);
+        instanceManager = new InstanceManager(this);
         seedInstances();
         buildNavigation();
         showPage("Home");
     }
 
+    private void setImmersiveMode() {
+        getWindow().setStatusBarColor(getColor(R.color.veyron_bg));
+        getWindow().setNavigationBarColor(getColor(R.color.veyron_bg));
+        getWindow().getDecorView().setSystemUiVisibility(
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+            View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+            View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+            View.SYSTEM_UI_FLAG_FULLSCREEN);
+    }
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) setImmersiveMode();
+    }
     private int dp(float value) { return (int)(value * getResources().getDisplayMetrics().density + 0.5f); }
+    private GradientDrawable rounded(int color, int stroke) {
+        GradientDrawable d=new GradientDrawable(); d.setColor(color); d.setCornerRadius(dp(12));
+        if(stroke!=0)d.setStroke(dp(1),stroke); return d;
+    }
     private void buildNavigation() {
         navItems.removeAllViews();
         for (String page : pages) {
             Button b = new Button(this);
             b.setAllCaps(false); b.setText(page); b.setTextSize(12);
-            b.setGravity(Gravity.CENTER_VERTICAL);
-            b.setTextColor(getColor(page.equals(currentPage) ? R.color.veyron_accent : R.color.veyron_text));
-            b.setBackgroundColor(page.equals(currentPage) ? 0x3320D8C4 : 0x00000000);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(44));
-            lp.bottomMargin = dp(4); navItems.addView(b, lp);
+            b.setTypeface(Typeface.DEFAULT, page.equals(currentPage) ? Typeface.BOLD : Typeface.NORMAL);
+            b.setGravity(Gravity.CENTER_VERTICAL); b.setPadding(dp(14),0,dp(8),0);
+            b.setTextColor(getColor(page.equals(currentPage) ? R.color.veyron_accent : R.color.veyron_muted));
+            b.setBackground(rounded(page.equals(currentPage) ? 0x3320D8C4 : 0x00111A22,
+                page.equals(currentPage) ? 0x6630D6C4 : 0x00000000));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(42));
+            lp.bottomMargin = dp(5); navItems.addView(b, lp);
             b.setOnClickListener(v -> showPage(page));
         }
     }
@@ -64,13 +93,14 @@ public final class MainActivity extends Activity {
         t.setPadding(0, dp(5), 0, dp(5)); return t;
     }
     private void heading(String title, String subtitle) {
-        content.addView(text(title, 27, true, getColor(R.color.veyron_text)));
-        content.addView(text(subtitle, 12, false, getColor(R.color.veyron_muted)));
-        View gap = new View(this); content.addView(gap, new LinearLayout.LayoutParams(1, dp(15)));
+        TextView titleView=text(title,25,true,getColor(R.color.veyron_text));
+        titleView.setLetterSpacing(0.025f); content.addView(titleView);
+        content.addView(text(subtitle,11,false,getColor(R.color.veyron_muted)));
+        View gap = new View(this); content.addView(gap, new LinearLayout.LayoutParams(1, dp(18)));
     }
     private LinearLayout createCard(String title, String body) {
         LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(dp(16), dp(13), dp(16), dp(13)); box.setBackgroundResource(R.drawable.bg_panel);
+        box.setPadding(dp(17), dp(14), dp(17), dp(14)); box.setBackgroundResource(R.drawable.bg_panel);
         TextView h = text(title, 15, true, getColor(R.color.veyron_text));
         TextView d = text(body, 12, false, getColor(R.color.veyron_muted));
         box.addView(h); box.addView(d);
@@ -82,7 +112,10 @@ public final class MainActivity extends Activity {
         content.addView(box, lp); return box;
     }
     private Button action(String label, Runnable run) {
-        Button b = new Button(this); b.setText(label); b.setAllCaps(false); b.setTextSize(12);
+        Button b = new Button(this); b.setText(label); b.setAllCaps(false); b.setTextSize(11);
+        b.setTextColor(getColor(R.color.veyron_text)); b.setMinHeight(dp(42));
+        b.setPadding(dp(16),0,dp(16),0); b.setBackground(rounded(0xFF17232D,0xFF263844));
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(44)); lp.bottomMargin=dp(7);
         b.setOnClickListener(v -> run.run()); return b;
     }
     private void showPage(String page) {
@@ -270,40 +303,171 @@ public final class MainActivity extends Activity {
     }
 
     private void instances() {
-        heading("INSTANCES", "Independent profiles for versions, mods and game directories.");
-        content.addView(action("+ CREATE INSTANCE", this::createInstance));
-        for (String name : getInstances()) {
-            LinearLayout c = card(name, name.equals(selectedInstance()) ? "SELECTED INSTANCE" : "Separate profile • Not selected");
-            c.addView(action("SELECT", () -> { getPreferences(0).edit().putString(SELECTED, name).apply(); showPage("Instances"); }));
-            c.addView(action("RENAME", () -> renameInstance(name)));
-            c.addView(action("DELETE", () -> deleteInstance(name)));
+        heading("YOUR INSTANCES", "Separate Minecraft profiles • isolated game folders • independent versions");
+        List<InstanceManager.Profile> profiles=instanceManager.all();
+        card("INSTANCE LIBRARY", profiles.size()+" profile"+(profiles.size()==1?"":"s")+" created on this device");
+        content.addView(action("+  CREATE NEW INSTANCE", this::openCreateInstance));
+        if(profiles.isEmpty()) {
+            card("NO INSTANCES YET","Create your first instance to choose a Minecraft version and prepare its own game folder.");
+            return;
+        }
+        for(InstanceManager.Profile profile:profiles) {
+            boolean selected=profile.name.equals(selectedInstance());
+            boolean installed=instanceManager.isInstalled(profile);
+            LinearLayout panel=createCard(profile.name, (selected?"ACTIVE INSTANCE  •  ":"")+
+                profile.version+"  •  "+profile.loader+"  •  "+(installed?"CORE FILES READY":"NOT DOWNLOADED"));
+            panel.addView(text("GAME FOLDER  /game/instances/"+profile.id,10,false,getColor(R.color.veyron_muted)));
+            panel.addView(action(selected?"ACTIVE":"SET AS ACTIVE",()->{
+                getPreferences(0).edit().putString(SELECTED,profile.name).apply();
+                toast(profile.name+" selected"); showPage("Instances");
+            }));
+            panel.addView(action(installed?"REINSTALL VERSION CORE":"DOWNLOAD INSTANCE VERSION",()->downloadInstance(profile)));
+            panel.addView(action("RENAME INSTANCE",()->renameInstance(profile)));
+            panel.addView(action("DELETE PROFILE",()->deleteInstance(profile)));
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);
+            lp.bottomMargin=dp(12); content.addView(panel,lp);
         }
     }
-    private void createInstance() {
-        EditText input = new EditText(this); input.setSingleLine(true); input.setHint("e.g. Survival 1.21");
-        new AlertDialog.Builder(this).setTitle("New instance").setView(input)
-            .setPositiveButton("CREATE", (d,w) -> { String n=input.getText().toString().trim(); if(n.isEmpty()) return; List<String> a=getInstances(); if(a.contains(n)){toast("An instance with that name already exists.");return;} a.add(n); saveInstances(a); getPreferences(0).edit().putString(SELECTED,n).apply(); showPage("Instances"); })
-            .setNegativeButton("CANCEL", null).show();
+
+    private void openCreateInstance() {
+        if(!versionCatalog.isEmpty()) { showCreateInstanceDialog(); return; }
+        Toast.makeText(this,"Loading Minecraft versions…",Toast.LENGTH_SHORT).show();
+        versionManager.fetchVersions(new VersionManager.VersionsCallback() {
+            @Override public void onSuccess(List<VersionManager.Version> versions,String release,String snapshot) {
+                runOnUiThread(()->{
+                    versionCatalog=versions; latestRelease=release; latestSnapshot=snapshot;
+                    if("latest".equals(selectedVersion())&&!release.isEmpty())
+                        getPreferences(0).edit().putString(SELECTED_VERSION,release).apply();
+                    if(!isFinishing()) showCreateInstanceDialog();
+                });
+            }
+            @Override public void onError(Exception error) {
+                runOnUiThread(()->new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Version catalogue unavailable").setMessage(safeMessage(error))
+                    .setPositiveButton("RETRY", (d,w)->openCreateInstance())
+                    .setNegativeButton("CANCEL",null).show());
+            }
+        });
     }
-    private void renameInstance(String old) {
-        EditText input=new EditText(this); input.setText(old); input.setSingleLine(true);
+
+    private void showCreateInstanceDialog() {
+        LinearLayout form=new LinearLayout(this); form.setOrientation(LinearLayout.VERTICAL);
+        form.setPadding(dp(8),dp(6),dp(8),dp(2));
+        EditText name=new EditText(this); name.setSingleLine(true);
+        name.setText("Minecraft "+(instanceManager.all().size()+1));
+        name.setHint("Instance name");
+        form.addView(text("INSTANCE NAME",10,true,getColor(R.color.veyron_muted)));
+        form.addView(name);
+        form.addView(text("MINECRAFT VERSION",10,true,getColor(R.color.veyron_muted)));
+        ArrayList<String> versionNames=new ArrayList<>();
+        for(VersionManager.Version v:versionCatalog) if("release".equals(v.type)) versionNames.add(v.id);
+        if(versionNames.isEmpty()&&!latestRelease.isEmpty())versionNames.add(latestRelease);
+        if(versionNames.isEmpty())versionNames.add("latest");
+        Spinner versionPicker=new Spinner(this);
+        ArrayAdapter<String> versionAdapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,versionNames);
+        versionPicker.setAdapter(versionAdapter);
+        int defaultIndex=versionNames.indexOf(latestRelease);
+        if(defaultIndex>=0)versionPicker.setSelection(defaultIndex);
+        form.addView(versionPicker);
+        form.addView(text("MOD LOADER",10,true,getColor(R.color.veyron_muted)));
+        Spinner loaderPicker=new Spinner(this);
+        ArrayAdapter<String> loaderAdapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,
+            new String[]{"Vanilla","Fabric (coming soon)","Forge (coming soon)","NeoForge (coming soon)"});
+        loaderPicker.setAdapter(loaderAdapter); form.addView(loaderPicker);
+        new AlertDialog.Builder(this).setTitle("Create Minecraft instance").setView(form)
+            .setPositiveButton("CREATE INSTANCE",(d,w)->{
+                String instanceName=name.getText().toString().trim();
+                if(instanceName.isEmpty()){toast("Enter an instance name.");return;}
+                for(InstanceManager.Profile p:instanceManager.all()) if(p.name.equalsIgnoreCase(instanceName)){toast("An instance with that name already exists.");return;}
+                String loader=(String)loaderPicker.getSelectedItem();
+                if(!"Vanilla".equals(loader)){toast("This loader is not available yet. Choose Vanilla for now.");return;}
+                String version=(String)versionPicker.getSelectedItem();
+                try {
+                    InstanceManager.Profile created=instanceManager.create(instanceName,version,"Vanilla");
+                    getPreferences(0).edit().putString(SELECTED,created.name).apply();
+                    showPage("Instances");
+                    new AlertDialog.Builder(this).setTitle("Instance created")
+                        .setMessage(instanceName+" is ready to download its Minecraft "+version+" core files. Libraries, assets and runtime are still separate setup stages.")
+                        .setPositiveButton("DOWNLOAD NOW",(dialog,which)->downloadInstance(created))
+                        .setNegativeButton("LATER",null).show();
+                } catch(Exception error){toast("Could not create instance: "+safeMessage(error));}
+            }).setNegativeButton("CANCEL",null).show();
+    }
+
+    private VersionManager.Version findVersion(String id) {
+        for(VersionManager.Version v:versionCatalog) if(v.id.equals(id)) return v;
+        return null;
+    }
+
+    private void downloadInstance(InstanceManager.Profile profile) {
+        VersionManager.Version version=findVersion(profile.version);
+        if(version==null) {
+            versionManager.fetchVersions(new VersionManager.VersionsCallback() {
+                @Override public void onSuccess(List<VersionManager.Version> versions,String release,String snapshot) {
+                    runOnUiThread(()->{versionCatalog=versions;latestRelease=release;latestSnapshot=snapshot;
+                        if(!isFinishing())downloadInstance(profile);});
+                }
+                @Override public void onError(Exception error) {
+                    runOnUiThread(()->new AlertDialog.Builder(MainActivity.this).setTitle("Could not load version")
+                        .setMessage(safeMessage(error)).setPositiveButton("OK",null).show());
+                }
+            });
+            return;
+        }
+        ProgressDialog progress=new ProgressDialog(this);
+        progress.setTitle("Preparing "+profile.name);
+        progress.setMessage("Connecting to official Minecraft version files…");
+        progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progress.setCancelable(false); progress.show();
+        versionManager.install(version,instanceManager.gameDirectory(profile),new VersionManager.InstallCallback() {
+            @Override public void onProgress(String message){runOnUiThread(()->{if(!isFinishing())progress.setMessage(message);});}
+            @Override public void onSuccess(File directory){runOnUiThread(()->{
+                if(progress.isShowing())progress.dismiss();
+                if(isFinishing())return;
+                new AlertDialog.Builder(MainActivity.this).setTitle("Core download complete")
+                    .setMessage(profile.name+" now has the verified Minecraft "+profile.version+" metadata and client JAR in its own game folder. Libraries, assets, loader setup and Java runtime are not installed yet.")
+                    .setPositiveButton("DONE",(d,w)->showPage("Instances")).show();
+            });}
+            @Override public void onError(Exception error){runOnUiThread(()->{
+                if(progress.isShowing())progress.dismiss();
+                if(!isFinishing())new AlertDialog.Builder(MainActivity.this).setTitle("Instance download failed")
+                    .setMessage(safeMessage(error)).setPositiveButton("OK",null).show();
+            });}
+        });
+    }
+
+    private void renameInstance(InstanceManager.Profile profile) {
+        EditText input=new EditText(this); input.setSingleLine(true); input.setText(profile.name);
         new AlertDialog.Builder(this).setTitle("Rename instance").setView(input)
-            .setPositiveButton("SAVE",(d,w)->{String n=input.getText().toString().trim(); if(n.isEmpty())return; List<String>a=getInstances(); if(a.contains(n)&&!n.equals(old)){toast("Name already exists.");return;} a.set(a.indexOf(old),n); saveInstances(a); if(old.equals(selectedInstance()))getPreferences(0).edit().putString(SELECTED,n).apply(); showPage("Instances");})
-            .setNegativeButton("CANCEL",null).show();
+            .setPositiveButton("SAVE",(d,w)->{
+                String value=input.getText().toString().trim(); if(value.isEmpty())return;
+                for(InstanceManager.Profile p:instanceManager.all())if(!p.id.equals(profile.id)&&p.name.equalsIgnoreCase(value)){toast("Name already exists.");return;}
+                String old=profile.name;
+                try {instanceManager.rename(profile,value); if(old.equals(selectedInstance()))getPreferences(0).edit().putString(SELECTED,value).apply(); showPage("Instances");}
+                catch(Exception error){toast(safeMessage(error));}
+            }).setNegativeButton("CANCEL",null).show();
     }
-    private void deleteInstance(String name) {
-        new AlertDialog.Builder(this).setTitle("Delete instance?").setMessage("Remove this local profile entry? Game files are not deleted by this foundation build.")
-            .setPositiveButton("DELETE",(d,w)->{List<String>a=getInstances();a.remove(name);saveInstances(a); if(name.equals(selectedInstance()))getPreferences(0).edit().putString(SELECTED,a.isEmpty()?"":a.get(0)).apply();showPage("Instances");})
-            .setNegativeButton("CANCEL",null).show();
+
+    private void deleteInstance(InstanceManager.Profile profile) {
+        new AlertDialog.Builder(this).setTitle("Delete "+profile.name+"?")
+            .setMessage("This removes the instance from your library. Its files are kept safely on storage for now; no game data will be erased.")
+            .setPositiveButton("REMOVE",(d,w)->{
+                instanceManager.delete(profile);
+                if(profile.name.equals(selectedInstance())) {
+                    List<InstanceManager.Profile> remaining=instanceManager.all();
+                    getPreferences(0).edit().putString(SELECTED,remaining.isEmpty()?"":remaining.get(0).name).apply();
+                }
+                showPage("Instances");
+            }).setNegativeButton("CANCEL",null).show();
     }
-    private List<String> getInstances() {
-        ArrayList<String> out=new ArrayList<>();
-        try { JSONArray a=new JSONArray(getPreferences(0).getString(INSTANCES,"[]")); for(int i=0;i<a.length();i++)out.add(a.getString(i)); } catch(Exception ignored) {}
-        return out;
+
+    private String selectedInstance() {
+        String selected=getPreferences(0).getString(SELECTED,"Default");
+        for(InstanceManager.Profile p:instanceManager.all())if(p.name.equals(selected)||p.id.equals(selected))return p.name;
+        List<InstanceManager.Profile> all=instanceManager.all();
+        return all.isEmpty()?"No instance selected":all.get(0).name;
     }
-    private void saveInstances(List<String> items) { JSONArray a=new JSONArray(); for(String s:items)a.put(s); getPreferences(0).edit().putString(INSTANCES,a.toString()).apply(); }
-    private void seedInstances() { if(!getPreferences(0).contains(INSTANCES)){List<String>a=new ArrayList<>();a.add("Default");saveInstances(a);getPreferences(0).edit().putString(SELECTED,"Default").apply();} }
-    private String selectedInstance(){return getPreferences(0).getString(SELECTED,"Default");}
+
     private void accounts() {
         heading("ACCOUNTS", "Connect and switch game profiles.");
         card("MICROSOFT", "OAuth sign-in with authorization code + PKCE is not implemented yet. No password fields will be used.");
