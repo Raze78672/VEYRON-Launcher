@@ -19,6 +19,42 @@ def write_resource(relative: str, content: str) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(content.strip() + "\n", encoding="utf-8")
 
+# Lightweight springy press feedback for VEYRON controls.
+write_resource("java/git/artdeell/mojo/utils/VeyronJelly.java", r"""
+package git.artdeell.mojo.utils;
+
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.animation.OvershootInterpolator;
+
+public final class VeyronJelly {
+    private VeyronJelly() {}
+
+    public static void attach(View view) {
+        if (view == null) return;
+        view.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        view.setOnTouchListener((target, event) -> {
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    target.animate().cancel();
+                    target.animate().scaleX(0.94f).scaleY(0.94f)
+                            .setDuration(85L).start();
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    target.animate().cancel();
+                    target.animate().scaleX(1f).scaleY(1f)
+                            .setDuration(390L)
+                            .setInterpolator(new OvershootInterpolator(2.1f))
+                            .start();
+                    break;
+            }
+            return false;
+        });
+    }
+}
+""")
+
 # VEYRON emblem: a compact vector mark, used by every Android launcher icon size.
 write_resource("drawable/ic_veyron_mark.xml", r"""
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -167,6 +203,15 @@ write_resource("layout/activity_mojo_ui.xml", r"""
 write_resource("layout-land/activity_mojo_ui.xml",
                (RES / "layout" / "activity_mojo_ui.xml").read_text(encoding="utf-8"))
 
+select_auth = MOJO / "app_mojo" / "src" / "main" / "java" / "git" / "artdeell" / "mojo" / "fragments" / "SelectAuthFragment.java"
+replace_once(select_auth, '        mElyByButton.setOnClickListener(v -> launchAuthFragment(ElyByLoginFragment.class, ElyByLoginFragment.TAG));', '        mElyByButton.setOnClickListener(v -> launchAuthFragment(ElyByLoginFragment.class, ElyByLoginFragment.TAG));\n        git.artdeell.mojo.utils.VeyronJelly.attach(mMicrosoftButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mLocalButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mElyByButton);')
+
+main_menu = MOJO / "app_mojo" / "src" / "main" / "java" / "git" / "artdeell" / "mojo" / "fragments" / "MainMenuFragment.java"
+replace_once(main_menu, '        mOpenDirectoryButton.setOnClickListener((v)-> openGameDirectory(v.getContext()));', '        mOpenDirectoryButton.setOnClickListener((v)-> openGameDirectory(v.getContext()));\n        git.artdeell.mojo.utils.VeyronJelly.attach(mDiscordButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mCustomControlButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mInstallJarButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mShareLogsButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mOpenDirectoryButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mEditProfileButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mPlayButton);')
+
+select_auth = MOJO / "app_mojo" / "src" / "main" / "java" / "git" / "artdeell" / "mojo" / "fragments" / "SelectAuthFragment.java"
+replace_once(select_auth, '        mElyByButton.setOnClickListener(v -> launchAuthFragment(ElyByLoginFragment.class, ElyByLoginFragment.TAG));', '        mElyByButton.setOnClickListener(v -> launchAuthFragment(ElyByLoginFragment.class, ElyByLoginFragment.TAG));\n        git.artdeell.mojo.utils.VeyronJelly.attach(mMicrosoftButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mLocalButton);\n        git.artdeell.mojo.utils.VeyronJelly.attach(mElyByButton);')
+
 # Landscape home: workspace/action panel on the left and selected-version / Play panel on the right.
 write_resource("layout-land/fragment_launcher.xml", r"""
 <androidx.constraintlayout.widget.ConstraintLayout
@@ -222,7 +267,7 @@ write_resource("layout-land/fragment_launcher.xml", r"""
                 android:layout_weight="1" android:orientation="horizontal">
                 <com.kdt.mcgui.LauncherMenuButton
                     android:id="@+id/news_button" style="@style/LauncherMenuButton.Universal"
-                    android:layout_width="0dp" android:layout_height="match_parent"
+                    android:visibility="gone" android:layout_width="0dp" android:layout_height="match_parent"
                     android:layout_weight="1" android:layout_margin="3dp"
                     android:drawableStart="@drawable/ic_px_book" android:text="@string/mcl_tab_wiki"
                     android:textSize="10sp" />
@@ -374,6 +419,107 @@ write_resource("layout/item_account.xml", r"""
 </LinearLayout>
 """)
 
+
+write_resource("layout/fragment_select_auth_method.xml", r"""
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/veyron_home_background"
+    android:padding="22dp">
+    <LinearLayout
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_gravity="center" android:orientation="vertical"
+        android:padding="22dp" android:background="@drawable/veyron_auth_panel">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="VEYRON ACCOUNT CENTER" android:textColor="#55D8C8"
+            android:textSize="9sp" android:textStyle="bold" android:letterSpacing="0.16" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="7dp" android:text="Add your account"
+            android:textColor="#F0F7F7" android:textSize="23sp" android:textStyle="bold" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:layout_marginBottom="18dp"
+            android:text="Choose how you want to sign in to VEYRON Launcher."
+            android:textColor="#9EB3B7" android:textSize="11sp" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <com.kdt.mcgui.MineButton
+                android:id="@+id/button_microsoft_authentication"
+                android:layout_width="0dp" android:layout_height="68dp" android:layout_weight="1"
+                android:layout_marginEnd="7dp" android:drawableStart="@drawable/ic_auth_ms"
+                android:drawablePadding="9dp" android:gravity="center"
+                android:text="MICROSOFT" android:textSize="10sp" android:textStyle="bold" />
+            <com.kdt.mcgui.MineButton
+                android:id="@+id/button_elyby_authentication"
+                android:layout_width="0dp" android:layout_height="68dp" android:layout_weight="1"
+                android:layout_marginHorizontal="7dp" android:drawableStart="@drawable/ic_auth_elyby"
+                android:drawablePadding="9dp" android:gravity="center"
+                android:text="ELY.BY" android:textSize="10sp" android:textStyle="bold" />
+            <com.kdt.mcgui.MineButton
+                android:id="@+id/button_local_authentication"
+                android:layout_width="0dp" android:layout_height="68dp" android:layout_weight="1"
+                android:layout_marginStart="7dp" android:drawableStart="@drawable/ic_veyron_mark"
+                android:drawablePadding="9dp" android:gravity="center"
+                android:text="OFFLINE" android:textSize="10sp" android:textStyle="bold" />
+        </LinearLayout>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Your sign-in is handled securely by the selected account provider."
+            android:textColor="#718A8F" android:textSize="9sp" />
+    </LinearLayout>
+</FrameLayout>
+""")
+
+write_resource("drawable/veyron_auth_panel.xml", r"""
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#F0111E23" />
+    <corners android:radius="20dp" />
+    <stroke android:width="1dp" android:color="#38545A" />
+</shape>
+""")
+
+write_resource("layout/fragment_local_login.xml", r"""
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/veyron_home_background" android:padding="22dp">
+    <LinearLayout
+        android:id="@+id/veyron_local_login_panel"
+        android:layout_width="0dp" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="22dp"
+        android:background="@drawable/veyron_auth_panel"
+        app:layout_constraintWidth_percent="0.72"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="VEYRON OFFLINE PROFILE" android:textColor="#55D8C8"
+            android:textSize="9sp" android:textStyle="bold" android:letterSpacing="0.15" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Create local account"
+            android:textColor="#F0F7F7" android:textSize="22sp" android:textStyle="bold" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:text="Choose an in-game username for offline play."
+            android:textColor="#9EB3B7" android:textSize="11sp" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" android:text="@string/login_online_username_hint"
+            android:textColor="#C8D8D9" android:textSize="10sp" />
+        <com.kdt.mcgui.MineEditText
+            android:id="@+id/login_edit_email" android:layout_width="match_parent"
+            android:layout_height="44dp" android:layout_marginTop="5dp"
+            android:imeOptions="flagNoExtractUi" android:inputType="textPersonName"
+            android:textSize="14sp" />
+        <com.kdt.mcgui.MineButton
+            android:id="@+id/login_button" android:layout_width="match_parent"
+            android:layout_height="48dp" android:layout_marginTop="14dp"
+            android:onClick="loginMC" android:text="CREATE OFFLINE PROFILE"
+            android:textColor="@android:color/white" android:textStyle="bold" />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
+""")
+
+replace_once(APP / "src" / "main" / "res" / "values" / "strings.xml", '<string name="social_media_invite" translatable="false">https://discord.gg/VHdwQFsaGX</string>', '<string name="social_media_invite" translatable="false">https://discord.gg/A8NwCBEe52</string>')
 
 # Apply VEYRON colors to the existing launcher and preference theme.
 colors = APP / "src" / "main" / "res" / "values" / "colors.xml"
