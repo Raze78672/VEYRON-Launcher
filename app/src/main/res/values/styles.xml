@@ -9,6 +9,9 @@
         <item name="android:statusBarColor">@color/veyron_bg</item>
         <item name="android:navigationBarColor">@color/veyron_bg</item>
         <item name="android:windowBackground">@color/veyron_bg</item>
+        <item name="android:colorBackground">@color/veyron_bg</item>
+        <item name="android:textColorPrimary">@color/veyron_text</item>
+        <item name="android:textColorSecondary">@color/veyron_muted</item>
         <item name="android:colorAccent">@color/veyron_accent</item>
     </style>
 </resources>
