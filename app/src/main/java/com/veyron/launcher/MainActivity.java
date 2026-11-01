@@ -134,17 +134,18 @@ public final class MainActivity extends Activity {
         }
     }
     private void home() {
-        String selected = selectedVersion();
-        boolean installed = versionManager.isCoreInstalled(selected);
-        heading("YOUR WORLD. YOUR WAY.", "VEYRON Launcher • Android / Minecraft Java Edition");
-        card("ACTIVE INSTANCE", selectedInstance() + "  •  Local profile");
-        card("SELECTED VERSION", selected + (installed ? "  •  Core files installed" : "  •  Not installed"));
+        InstanceManager.Profile active=selectedProfile();
+        String selected=active==null?selectedVersion():active.version;
+        boolean installed=active!=null&&instanceManager.isInstalled(active);
+        heading("YOUR WORLD. YOUR WAY.", "VEYRON Launcher  •  Android / Minecraft Java Edition");
+        card("ACTIVE INSTANCE", active==null?"No instance created":active.name+"  •  "+active.loader);
+        card("SELECTED VERSION", selected + (installed ? "  •  Core files installed" : "  •  Not downloaded"));
         card("ACCOUNT", "No Microsoft account connected. Minecraft authentication is not configured.");
         content.addView(action("MANAGE INSTANCES", () -> showPage("Instances")));
         content.addView(action("BROWSE VERSIONS", () -> showPage("Versions")));
-        content.addView(action(installed ? "PLAY  •  SET UP RUNTIME TO CONTINUE" : "INSTALL SELECTED VERSION", () -> {
+        content.addView(action(installed ? "PLAY  •  SET UP RUNTIME TO CONTINUE" : "DOWNLOAD ACTIVE INSTANCE", () -> {
             if (!installed) {
-                showPage("Versions");
+                if(active!=null) downloadInstance(active); else showPage("Instances");
                 return;
             }
             new AlertDialog.Builder(this).setTitle("Game launch is not ready")
@@ -152,7 +153,7 @@ public final class MainActivity extends Activity {
                 .setPositiveButton("OPEN JAVA & RUNTIME", (d,w) -> showPage("Java & Runtime"))
                 .setNegativeButton("OK", null).show();
         }));
-        card("INSTALLER STATUS", "Official Mojang version metadata and SHA-1-verified client JAR downloads are available. Full game assembly and Android runtime launch are still in development.");
+        card("INSTALLER STATUS", "Per-instance folders and verified Minecraft core downloads are enabled. Libraries, assets, loaders, Java runtime and actual game launch are still in development.");
     }
 
     private void versions() {
@@ -269,31 +270,26 @@ public final class MainActivity extends Activity {
     }
 
     private void downloads() {
-        heading("DOWNLOAD CENTER", "Minecraft version core files stored in app-private storage.");
-        File root = new File(getFilesDir(), "game/versions");
-        File[] directories = root.listFiles();
-        if (directories == null || directories.length == 0) {
-            card("NO INSTALLED VERSIONS", "Open Versions to browse the official catalogue and download a version.");
-            content.addView(action("BROWSE VERSIONS", () -> showPage("Versions")));
+        heading("DOWNLOAD CENTER", "Track Minecraft core files for each isolated instance.");
+        List<InstanceManager.Profile> profiles=instanceManager.all();
+        if(profiles.isEmpty()) {
+            card("NO INSTANCES", "Create an instance before downloading its Minecraft version.");
+            content.addView(action("CREATE INSTANCE",()->showPage("Instances")));
             return;
         }
-        int count = 0;
-        for (File directory : directories) {
-            if (!directory.isDirectory()) continue;
-            String id = directory.getName();
-            boolean complete = versionManager.isCoreInstalled(id);
-            LinearLayout item = createCard(id, complete ? "Metadata + client JAR present" : "Incomplete download");
-            item.addView(action("SELECT VERSION", () -> {
-                getPreferences(0).edit().putString(SELECTED_VERSION, id).apply();
-                toast("Selected " + id);
-                showPage("Home");
+        for(InstanceManager.Profile profile:profiles) {
+            boolean installed=instanceManager.isInstalled(profile);
+            LinearLayout panel=createCard(profile.name,
+                profile.version+"  •  "+profile.loader+"  •  "+(installed?"CORE FILES READY":"WAITING FOR DOWNLOAD"));
+            panel.addView(text(installed?"Minecraft metadata and client JAR verified":"This instance has not downloaded its Minecraft core yet.",11,false,getColor(R.color.veyron_muted)));
+            panel.addView(action("OPEN INSTANCE",()->{
+                getPreferences(0).edit().putString(SELECTED,profile.name).apply();
+                showPage("Instances");
             }));
-            LinearLayout.LayoutParams itemLp = new LinearLayout.LayoutParams(-1, -2);
-            itemLp.bottomMargin = dp(10);
-            content.addView(item, itemLp);
-            count++;
+            panel.addView(action(installed?"DOWNLOAD AGAIN":"DOWNLOAD VERSION",()->downloadInstance(profile)));
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);
+            lp.bottomMargin=dp(11); content.addView(panel,lp);
         }
-        if (count == 0) card("NO INSTALLED VERSIONS", "Browse Versions to start an install.");
     }
 
     private String selectedVersion() { return getPreferences(0).getString(SELECTED_VERSION, "latest"); }
@@ -461,11 +457,30 @@ public final class MainActivity extends Activity {
             }).setNegativeButton("CANCEL",null).show();
     }
 
-    private String selectedInstance() {
+    private InstanceManager.Profile selectedProfile() {
         String selected=getPreferences(0).getString(SELECTED,"Default");
-        for(InstanceManager.Profile p:instanceManager.all())if(p.name.equals(selected)||p.id.equals(selected))return p.name;
         List<InstanceManager.Profile> all=instanceManager.all();
-        return all.isEmpty()?"No instance selected":all.get(0).name;
+        for(InstanceManager.Profile p:all)if(p.name.equals(selected)||p.id.equals(selected))return p;
+        return all.isEmpty()?null:all.get(0);
+    }
+    private String selectedInstance() {
+        InstanceManager.Profile p=selectedProfile();
+        return p==null?"No instance selected":p.name;
+    }
+    private void seedInstances() {
+        List<InstanceManager.Profile> profiles=instanceManager.all();
+        if(profiles.isEmpty()) {
+            try {
+                InstanceManager.Profile created=instanceManager.create("Default",selectedVersion(),"Vanilla");
+                getPreferences(0).edit().putString(SELECTED,created.name).apply();
+            } catch(Exception ignored) {}
+        } else {
+            instanceManager.save(profiles); // migrate old name-only profiles to structured instance records
+            String selected=getPreferences(0).getString(SELECTED,profiles.get(0).name);
+            boolean found=false;
+            for(InstanceManager.Profile p:profiles)if(p.name.equals(selected)||p.id.equals(selected))found=true;
+            if(!found)getPreferences(0).edit().putString(SELECTED,profiles.get(0).name).apply();
+        }
     }
 
     private void accounts() {
