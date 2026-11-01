@@ -390,7 +390,7 @@ for old, new in [
 styles = APP / "src" / "main" / "res" / "values" / "styles.xml"
 style_data = styles.read_text(encoding="utf-8")
 style_data = style_data.replace('<item name="windowNoTitle">true</item>',
-    '<item name="windowNoTitle">true</item>\\n        <item name="colorAccent">#16C7B4</item>\\n        <item name="android:colorAccent">#16C7B4</item>\\n        <item name="android:textColorPrimary">#EAFBFA</item>\\n        <item name="android:textColorSecondary">#9EB3B7</item>')
+    '<item name="windowNoTitle">true</item>' + chr(10) + '        <item name="colorAccent">#16C7B4</item>' + chr(10) + '        <item name="android:colorAccent">#16C7B4</item>' + chr(10) + '        <item name="android:textColorPrimary">#EAFBFA</item>' + chr(10) + '        <item name="android:textColorSecondary">#9EB3B7</item>')
 styles.write_text(style_data, encoding="utf-8")
 # Point any legacy MJ/Pojav logo resource references at the VEYRON emblem.
 for path in APP.rglob("*"):
@@ -440,6 +440,10 @@ replace_once(manifest, 'android:roundIcon="@mipmap/ic_launcher_round"', 'android
 replace_once(manifest,
     '<activity\n            android:name=".LauncherActivity"\n            android:label="@string/app_short_name"\n            android:windowSoftInputMode="adjustResize"/>',
     '<activity\n            android:name=".LauncherActivity"\n            android:label="@string/app_short_name"\n            android:screenOrientation="sensorLandscape"\n            android:windowSoftInputMode="adjustResize"/>')
+
+account_spinner = APP / "src" / "main" / "java" / "com" / "kdt" / "mcgui" / "AccountSpinner.java"
+replace_once(account_spinner, 'setBackgroundColor(getResources().getColor(R.color.background_status_bar));',
+             'setBackgroundResource(R.drawable.veyron_account_chip);')
 
 # A single product name across all translations and devices.
 for strings in (APP / "src" / "main" / "res").glob("values*/strings.xml"):
