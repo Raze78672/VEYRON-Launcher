@@ -524,7 +524,7 @@ write_resource("layout/fragment_local_login.xml", r"""
 """)
 
 replace_once(APP / "src" / "main" / "res" / "values" / "strings.xml", '<string name="social_media_invite" translatable="false">https://discord.gg/VHdwQFsaGX</string>', '<string name="social_media_invite" translatable="false">https://discord.gg/A8NwCBEe52</string>')
-replace_once(APP / "src" / "main" / "res" / "values" / "strings.xml", '<string name="mcl_button_social_media">Social Media</string>', '<string name="mcl_button_social_media">Discord Community</string>')
+replace_once(APP / "src" / "main" / "res" / "values" / "strings.xml", '<string name="mcl_button_social_media">Discord</string>', '<string name="mcl_button_social_media">Discord Community</string>')
 
 # Apply VEYRON colors to the existing launcher and preference theme.
 colors = APP / "src" / "main" / "res" / "values" / "colors.xml"
