@@ -116,6 +116,7 @@ public final class MainActivity extends Activity {
         b.setTextColor(getColor(R.color.veyron_text)); b.setMinHeight(dp(42));
         b.setPadding(dp(16),0,dp(16),0); b.setBackground(rounded(0xFF17232D,0xFF263844));
         LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(44)); lp.bottomMargin=dp(7);
+        b.setLayoutParams(lp);
         b.setOnClickListener(v -> run.run()); return b;
     }
     private void showPage(String page) {
@@ -162,6 +163,10 @@ public final class MainActivity extends Activity {
         content.addView(versionStatus);
         EditText search = new EditText(this);
         search.setSingleLine(true); search.setTextSize(13); search.setHint("Search version (e.g. 1.21.4)");
+        search.setTextColor(getColor(R.color.veyron_text));
+        search.setHintTextColor(getColor(R.color.veyron_muted));
+        search.setPadding(dp(14),0,dp(14),0);
+        search.setBackground(rounded(0xFF111A22,0xFF293945));
         search.setText(versionSearch);
         LinearLayout.LayoutParams searchLp = new LinearLayout.LayoutParams(-1, dp(48));
         searchLp.bottomMargin = dp(10); content.addView(search, searchLp);
