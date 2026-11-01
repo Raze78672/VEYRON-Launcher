@@ -80,7 +80,18 @@ public final class InstanceManager {
     }
 
     public void rename(Profile profile,String newName) throws Exception {
-        profile.name=newName; save(all());
+        profile.name=newName;
+        List<Profile> profiles=all();
+        for(Profile item:profiles) if(item.id.equals(profile.id)) item.name=newName;
+        save(profiles);
+        writeMetadata(profile);
+    }
+
+    public void updateVersion(Profile profile,String newVersion) throws Exception {
+        profile.version=newVersion;
+        List<Profile> profiles=all();
+        for(Profile item:profiles) if(item.id.equals(profile.id)) item.version=newVersion;
+        save(profiles);
         writeMetadata(profile);
     }
 
